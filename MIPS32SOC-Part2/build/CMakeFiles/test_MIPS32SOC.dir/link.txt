@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/test_MIPS32SOC.dir/opt/verilator/share/verilator/include/verilated.cpp.o CMakeFiles/test_MIPS32SOC.dir/test_MIPS32SOC.cpp.o  -o test_MIPS32SOC verilog-build/VMIPS32SOC__ALL.a -static-libgcc -static-libstdc++ 

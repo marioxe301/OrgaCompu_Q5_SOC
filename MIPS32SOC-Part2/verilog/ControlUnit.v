@@ -10,6 +10,7 @@ module ControlUnit(
     output reg isBne, //! BNE signal
     output reg [1:0] rfWriteDataSel, //! Register File Write Data Select (Seleciona si lo que se va escribir viene del memory o del alu)
     output reg rfWriteAddrSel, //! Register File Write Address Select (Decide la direccion dependiendo de la instuccion)
+    output reg rfLuiSel,
     output reg rfWriteEnable, //! Register Write Enable 
     output reg memWrite, //! Memory Write 
     output reg memRead, //! Memory Read
@@ -62,6 +63,28 @@ module ControlUnit(
                     rfWriteEnable = `ON_1b;
                     aluFunc = `ALU_SLT;
                 end
+                `MIPS_ADDU:begin
+                    rfWriteAddrSel = `ON_1b; //Reg Dst
+                    rfWriteEnable = `ON_1b;
+                    aluFunc = `ALU_ADD;
+                end
+                `MIPS_SUBU:begin
+                    rfWriteAddrSel = `ON_1b;
+                    rfWriteEnable = `ON_1b;
+                    aluFunc = `ALU_SUB;
+                end
+
+                `MIPS_XOR: begin
+                    rfWriteAddrSel = `ON_1b;
+                    rfWriteEnable = `ON_1b;
+                    aluFunc = `ALU_XOR;
+                end
+                `MIPS_SLTU: begin
+                    rfWriteEnable = `ON_1b;
+                    rfWriteAddrSel = `ON_1b;
+                    aluFunc = `ALU_SLTU;
+                end
+
                 default: invOpcode = `ON_1b;
             endcase
         end else begin // para las instrucciones de formato I y J y se usa opc 
@@ -78,6 +101,7 @@ module ControlUnit(
             aluFunc = `OFF_3b;
             bitXtend = `OFF_1b;
             invOpcode = `OFF_1b;
+            rfLuiSel = `OFF_1b;
 
             case (opc)
                 `MIPS_LW: begin
@@ -103,7 +127,51 @@ module ControlUnit(
                 end
                 `MIPS_JUMP: begin
                     isJmp = `ON_1b;
-                end 
+                end
+
+                `MIPS_ADDI: begin
+                    aluSrc = `ON_1b;
+                    aluFunc = `ALU_ADD;
+                    rfWriteEnable = `ON_1b;
+                end
+                `MIPS_ADDIU: begin
+                    aluSrc = `ON_1b;
+                    aluFunc = `ALU_ADD;
+                    rfWriteEnable = `ON_1b;
+                end
+                `MIPS_ANDI: begin
+                    aluSrc = `ON_1b;
+                    aluFunc = `ALU_AND;
+                    rfWriteEnable = `ON_1b;
+                    bitXtend = `ON_1b;
+                end
+                `MIPS_ORI: begin
+                    aluSrc = `ON_1b;
+                    aluFunc = `ALU_OR;
+                    rfWriteEnable = `ON_1b;
+                    bitXtend = `ON_1b;
+                end
+                
+                `MIPS_LUI: begin
+                    rfWriteEnable = `ON_1b;
+                    rfLuiSel = `ON_1b;
+                end
+                `MIPS_XORI: begin
+                    aluSrc = `ON_1b;
+                    aluFunc = `ALU_XOR;
+                    rfWriteEnable = `ON_1b;
+                end
+                `MIPS_SLTI:begin
+                    aluSrc = `ON_1b;
+                    aluFunc = `ALU_SLT;
+                    rfWriteEnable = `ON_1b;
+                end
+                `MIPS_SLTIU:begin
+                    aluSrc = `ON_1b;
+                    aluFunc = `ALU_SLTU;
+                    rfWriteEnable = `ON_1b;
+                end
+                
                 default: invOpcode = `ON_1b;
             endcase
         end

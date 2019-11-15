@@ -22,7 +22,7 @@ module MIPS32SOC (
     wire [31:0] rfData2 /*verilator public*/;
     wire [31:0] imm32;
     wire [15:0] imm16;
-    wire [7:0] memAddr;
+    wire [10:0] memAddr;
     wire memWrite;
     wire memRead;
     wire [31:0] memData;
@@ -37,6 +37,17 @@ module MIPS32SOC (
     wire isZero /*verilator public*/;
     wire bitXtend;
     wire invalidOpcode /*verilator public*/;
+
+    //nuevos wires
+    wire rfLuiSelector;
+    wire [31:0]rfWriteData2;
+    wire [31:0]luiValue;
+
+    //nuevas conexiones
+    wire [9:0] phyAddrPc;
+    wire invAddrPc;
+
+    wire invalidMemAddr;
   
     assign func = inst[5:0];
     assign rd = inst[15:11];
@@ -44,15 +55,24 @@ module MIPS32SOC (
     assign rs = inst[25:21];
     assign opcode = inst[31:26];
     assign imm16 = inst[15:0];
-    assign memAddr = aluResult[9:2];
+
+    //modificado y cambiado a 11 bits
+    //assign memAddr = aluResult[9:2];
 
     assign pcPlus4 = PC + 32'd4;
     assign jmpTarget32 = {pcPlus4[31:28], inst[25:0], 2'b00}; // los 26 bits se toman y se multiplica con 4 sll y se rellena con 4 bits del pc + 4
-    assign branchTargetAddr = pcPlus4 + {imm32[29:0], 2'b00}; // se agarra el opset y se le suma el pc + 4 
+    assign branchTargetAddr = pcPlus4 + {imm32[29:0], 2'b00}; // se agarra el opset y se le suma el pc + 4
+     
 
     assign rfWriteAddr = rfWriteAddrSel? rd : rt; // MUX
     assign aluOperand2 = aluSrc? imm32 : rfData2; // MUX
     assign rfWriteData = rfWriteDataSel[0]? memData : aluResult; // MUX
+
+    //nuevos assigns
+    //lui assign
+    assign luiValue = {imm16,16'b0};
+
+    assign rfWriteData2 = rfLuiSelector ? luiValue : rfWriteData; 
 
     // Next PC value
     always @ (*) begin
@@ -69,16 +89,29 @@ module MIPS32SOC (
     // PC
     always @ (posedge clk) begin
         if (rst)
-            PC <= 32'd0;
+            PC <= 32'h00400000; // posicion inicial = 32'h00400000 posicion final = 32'h00400FFF 
         else
             PC <= nextPC;
     end
-  
+    // PC Decoder
+    PCDecoder pcdec (
+        .virtualPC( PC ), // 32 bits
+        .physicalPC( phyAddrPc ), // 10 bits
+        .invalidPC( invAddrPc ) // 1 bit
+    );
+
     // Instruction Memory
     InstMemory instMem (
-        .addr( PC[9:2] ),
+        .addr( phyAddrPc ), //PC[9:2]
         .en( 1'b1 ),
         .readData( inst )
+    );
+
+    //Memory Decoder
+    MemoryDecoder memdec(
+        .virtualAddr( aluResult ), // 32 bits
+        .physicalAddr( memAddr ), // 11 bits
+        .invalidAddr( invalidMemAddr )  // 1 bit
     );
 
     // Data Memory
@@ -96,7 +129,7 @@ module MIPS32SOC (
         .ra1( rs ),
         .ra2( rt ),
         .wa( rfWriteAddr ),
-        .wd( rfWriteData ),
+        .wd( rfWriteData2 ),
         .we( rfWriteEnable ),
         .clk( clk ),
         .rd1( rfData1 ),
@@ -134,6 +167,7 @@ module MIPS32SOC (
     .aluSrc( aluSrc ),    
     .aluFunc( aluFunc ),
     .bitXtend( bitXtend ),
-    .invOpcode( invalidOpcode )
+    .invOpcode( invalidOpcode ),
+    .rfLuiSel( rfLuiSelector )
   );
 endmodule
