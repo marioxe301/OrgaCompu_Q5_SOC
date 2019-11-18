@@ -45,9 +45,11 @@ module MIPS32SOC (
 
     //nuevas conexiones
     wire [9:0] phyAddrPc;
-    wire invAddrPc;
+    wire invalidPC /*verilator public*/;
 
-    wire invalidMemAddr;
+    wire invalidAddr /*verilator public*/;
+
+    wire enableMemDec;
   
     assign func = inst[5:0];
     assign rd = inst[15:11];
@@ -72,7 +74,9 @@ module MIPS32SOC (
     //lui assign
     assign luiValue = {imm16,16'b0};
 
-    assign rfWriteData2 = rfLuiSelector ? luiValue : rfWriteData; 
+    assign rfWriteData2 = rfLuiSelector ? luiValue : rfWriteData;
+
+    assign enableMemDec = ( memRead || memWrite );
 
     // Next PC value
     always @ (*) begin
@@ -90,6 +94,8 @@ module MIPS32SOC (
     always @ (posedge clk) begin
         if (rst)
             PC <= 32'h00400000; // posicion inicial = 32'h00400000 posicion final = 32'h00400FFF 
+        else if(invalidOpcode || invalidAddr || invalidPC)
+            PC <= PC;
         else
             PC <= nextPC;
     end
@@ -97,7 +103,7 @@ module MIPS32SOC (
     PCDecoder pcdec (
         .virtualPC( PC ), // 32 bits
         .physicalPC( phyAddrPc ), // 10 bits
-        .invalidPC( invAddrPc ) // 1 bit
+        .invalidPC( invalidPC ) // 1 bit
     );
 
     // Instruction Memory
@@ -108,10 +114,11 @@ module MIPS32SOC (
     );
 
     //Memory Decoder
-    MemoryDecoder memdec(
+    MemDecoder memdec(
         .virtualAddr( aluResult ), // 32 bits
         .physicalAddr( memAddr ), // 11 bits
-        .invalidAddr( invalidMemAddr )  // 1 bit
+        .invalidAddr( invalidAddr ),  // 1 bit
+        .enable( enableMemDec )
     );
 
     // Data Memory

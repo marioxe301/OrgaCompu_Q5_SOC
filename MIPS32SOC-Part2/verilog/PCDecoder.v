@@ -1,7 +1,7 @@
 module PCDecoder (
     input [31:0]virtualPC,
     output [9:0]physicalPC,
-    output invalidPC
+    output [0:0]invalidPC
 );
     wire [31:0] tempPC;
 
@@ -10,6 +10,6 @@ module PCDecoder (
 
     //descartar los 2 bits mas significativos
     assign physicalPC = tempPC[9:0]; // daria la direccion fisica de la direccion virtual
-    assign invalidPC = ~( virtualPC >= 32'h00400000 && virtualPC <= 32'h00400FFF ) ; // daria el error si es una direccion invalida
+    assign invalidPC = ( virtualPC < 32'h00400000 || virtualPC > 32'h00400FFF ) ; // daria el error si es una direccion invalida
 
 endmodule

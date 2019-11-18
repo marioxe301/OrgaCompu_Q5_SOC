@@ -160,6 +160,7 @@ module ControlUnit(
                     aluSrc = `ON_1b;
                     aluFunc = `ALU_XOR;
                     rfWriteEnable = `ON_1b;
+                    bitXtend = `ON_1b;
                 end
                 `MIPS_SLTI:begin
                     aluSrc = `ON_1b;

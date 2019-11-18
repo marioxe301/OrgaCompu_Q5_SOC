@@ -1,3 +1,0 @@
-/home/marioxe301/Documents/OrgaComp/ProyectoOrga/ProyectoSOC/MIPS32SOC-Part2/build/CMakeFiles/rebuild_cache.dir
-/home/marioxe301/Documents/OrgaComp/ProyectoOrga/ProyectoSOC/MIPS32SOC-Part2/build/CMakeFiles/test_MIPS32SOC.dir
-/home/marioxe301/Documents/OrgaComp/ProyectoOrga/ProyectoSOC/MIPS32SOC-Part2/build/CMakeFiles/edit_cache.dir

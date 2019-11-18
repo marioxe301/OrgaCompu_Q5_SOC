@@ -11,6 +11,7 @@
 #include "VMIPS32SOC.h"
 
 #define GLOBAL_BASEADDR 0x10010000
+#define STACK_BASEADDR  0x7FFFF000
 #define CODE_BASEADDR   0x00400000
 
 #define DECLARE_MIPS32_REGS(m) \
@@ -51,6 +52,7 @@
 #define CHECK_ERROR_SIGNALS(m) \
         do { \
             REQUIRE((m).MIPS32SOC->invalidOpcode == 0); \
+            REQUIRE((m).MIPS32SOC->invalidPC == 0); \
         } while (0)
 
 #include "tests-code.cpp"
@@ -152,6 +154,34 @@ TEST_CASE("'add' test") {
     CHECK(t2 == 0);
 }
 
+TEST_CASE("'addu' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    a0 = 10500;  
+    a1 = 3500;
+    a2 = -3500;
+    a3 = 500;
+
+    setProgramCode(m, test_addu_code, TEST_ADDU_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+    
+    CHECK(t0 == 14000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+    
+    CHECK(t1 == -3000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+    
+    CHECK(t2 == 0);
+}
+
 TEST_CASE("'sub' test") {
     VMIPS32SOC m;
     DECLARE_MIPS32_REGS(m);
@@ -163,6 +193,34 @@ TEST_CASE("'sub' test") {
     a3 = 500;
 
     setProgramCode(m, test_sub_code, TEST_SUB_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+    
+    CHECK(t0 == 7000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+    
+    CHECK(t1 == -4000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+    
+    CHECK(t2 == 7000);
+}
+
+TEST_CASE("'subu' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    a0 = 10500;  
+    a1 = 3500;
+    a2 = -3500;
+    a3 = 500;
+
+    setProgramCode(m, test_subu_code, TEST_SUBU_CODE_SIZE);
 
     reset(m);
     REQUIRE(pc == CODE_BASEADDR);
@@ -232,6 +290,31 @@ TEST_CASE("'or' test") {
     CHECK(t2 == 0x00BB33DD);
 }
 
+TEST_CASE("'xor' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+
+    a0 = 0xaabbccdd;  
+    a1 = 0xffffffff;
+    a2 = 0x11223344;
+
+    setProgramCode(m, test_xor_code, TEST_XOR_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t0 == 0x55443322);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t1 == 0xEEDDCCBB);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t2 == 0x0);
+}
+
 TEST_CASE("'slt' test") {
     VMIPS32SOC m;
     DECLARE_MIPS32_REGS(m);
@@ -258,6 +341,31 @@ TEST_CASE("'slt' test") {
     CHECK(t2 == 0);
 }
 
+TEST_CASE("'sltu' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+
+    a0 = 10500;  
+    a1 = 1;
+    a2 = 0xffffffff;
+
+    setProgramCode(m, test_sltu_code, TEST_SLTU_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t0 == 0);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t1 == 0);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t2 == 1);
+}
+
 TEST_CASE("'lw' test") {
     VMIPS32SOC m;
     DECLARE_MIPS32_REGS(m);
@@ -274,14 +382,17 @@ TEST_CASE("'lw' test") {
     reset(m);
     REQUIRE(pc == CODE_BASEADDR);
     CHECK_ERROR_SIGNALS(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
     clockPulse(m);
     
     CHECK(t0 == 0xaabbccdd);
     CHECK_ERROR_SIGNALS(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
     clockPulse(m);
 
     CHECK(t1 == 0x11223344);
     CHECK_ERROR_SIGNALS(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
     clockPulse(m);
 
     CHECK(t2 == 0xdeadbeef);
@@ -301,14 +412,17 @@ TEST_CASE("'sw' test") {
     reset(m);
     REQUIRE(pc == CODE_BASEADDR);
     CHECK_ERROR_SIGNALS(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
     clockPulse(m);
 
     CHECK(m.MIPS32SOC->dataMem->memory[0] == 0xaabbccdd);
     CHECK_ERROR_SIGNALS(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
     clockPulse(m);
 
     CHECK(m.MIPS32SOC->dataMem->memory[4] == 0x11223344);
     CHECK_ERROR_SIGNALS(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
     clockPulse(m);
     
     CHECK(m.MIPS32SOC->dataMem->memory[16] == 0xdeadbeef);
@@ -389,4 +503,284 @@ TEST_CASE("'bne' test") {
     clockPulse(m);
     
     CHECK(pc == (CODE_BASEADDR + 8));
+}
+
+TEST_CASE("'lui' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    setProgramCode(m, test_lui_code, TEST_LUI_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t0 == 0xaabb0000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t1 == 0xccdd0000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t2 == 0x11220000);
+}
+
+TEST_CASE("'addi' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    a0 = 3500;
+    a1 = 3500;
+    a2 = 3500;
+
+    setProgramCode(m, test_addi_code, TEST_ADDI_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t0 == 4000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t1 == 3000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t2 == 0);
+}
+
+TEST_CASE("'addiu' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    a0 = 3500;
+    a1 = 3500;
+    a2 = 3500;
+
+    setProgramCode(m, test_addiu_code, TEST_ADDIU_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t0 == 4000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t1 == 3000);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t2 == 0);
+}
+
+TEST_CASE("'andi' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    a0 = 0xaabbccdd;
+    a2 = 0x11223344;
+
+    setProgramCode(m, test_andi_code, TEST_ANDI_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t0 == 0xdd);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t1 == 0x3344);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t2 == 0xc0d0);
+}
+
+TEST_CASE("'ori' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    a0 = 0xaabbcc00;
+    a1 = 0x11223300;
+    a2 = 0x11223300;
+
+    setProgramCode(m, test_ori_code, TEST_ORI_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t0 == 0xaabbccdd);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t1 == 0x11223344);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t2 == 0x1122f3cd);
+}
+
+TEST_CASE("'xori' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+    a0 = 0xaabbccdd;
+    a1 = 0xffffffff;
+    a2 = 0x11223344;
+
+    setProgramCode(m, test_xori_code, TEST_XORI_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t0 == 0xAABB3322);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t1 == 0x1122CCBB);
+    CHECK_ERROR_SIGNALS(m);
+    clockPulse(m);
+
+    CHECK(t2 == 0x11220000);
+}
+
+TEST_CASE("'slti' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+
+    a0 = 10500;  
+    a1 = 1;
+    a2 = 0xffffffff;
+
+    setProgramCode(m, test_slti_code, TEST_SLTI_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t0 == 1);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t1 == 1);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t2 == 0);
+}
+
+TEST_CASE("'sltiu' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    randomizeRegisterFile(m);
+
+    a0 = 10500;  
+    a1 = 1;
+    a2 = 0xffffffff;
+
+    setProgramCode(m, test_sltiu_code, TEST_SLTIU_CODE_SIZE);
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t0 == 0);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t1 == 0);
+    clockPulse(m);
+    CHECK_ERROR_SIGNALS(m);
+    CHECK(t2 == 1);
+}
+
+TEST_CASE("'invalid PC' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    // Special program
+    m.MIPS32SOC->instMem->memory[0] = 0x08100200; //j	0x400800
+    m.MIPS32SOC->instMem->memory[0x800] = 0x08100400; //j	0x401000
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    clockPulse(m);
+    CHECK(m.MIPS32SOC->invalidPC == 0);
+    CHECK(pc == (CODE_BASEADDR + 0x800));
+    clockPulse(m);
+    CHECK(m.MIPS32SOC->invalidPC == 0);
+}
+
+TEST_CASE("'invalid global address' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    setProgramCode(m, test_invalid_gbladdr_code, TEST_INVALID_GBLADDR_CODE_SIZE);
+    a0 = GLOBAL_BASEADDR;
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
+    //std::cout<< pc<< '\n';
+    clockPulse(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
+    //std::cout<< pc<< '\n';
+    clockPulse(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
+    //std::cout<< pc<< '\n';
+    clockPulse(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 1);
+    //std::cout<< pc<< '\n';
+    clockPulse(m);
+    REQUIRE(pc == CODE_BASEADDR + 0xc);
+    //std::cout<< pc<< '\n';
+    a0 = GLOBAL_BASEADDR - 4;
+    reset(m);
+    //std::cout<< pc<< '\n';
+    REQUIRE(m.MIPS32SOC->invalidAddr == 1);
+}
+
+TEST_CASE("'invalid stack address' test") {
+    VMIPS32SOC m;
+    DECLARE_MIPS32_REGS(m);
+
+    setProgramCode(m, test_invalid_stkaddr_code, TEST_INVALID_STKADDR_CODE_SIZE);
+    a1 = STACK_BASEADDR;
+
+    reset(m);
+    REQUIRE(pc == CODE_BASEADDR);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
+    clockPulse(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
+    
+    clockPulse(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 0);
+
+    clockPulse(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 1);
+
+    clockPulse(m);
+    REQUIRE(pc == CODE_BASEADDR + 0xc);
+
+    a1 = STACK_BASEADDR - 4;
+    reset(m);
+    REQUIRE(m.MIPS32SOC->invalidAddr == 1);
 }
