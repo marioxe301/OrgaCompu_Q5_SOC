@@ -4,7 +4,7 @@
 #include <chrono>
 #include <random>
 #include "doctest.h"
-#include "VMIPS32SOC_InstMemory.h"
+#include "VMIPS32SOC_AsyncROM.h"
 #include "VMIPS32SOC_DataMem.h"
 #include "VMIPS32SOC_RegisterFile.h"
 #include "VMIPS32SOC_MIPS32SOC.h"

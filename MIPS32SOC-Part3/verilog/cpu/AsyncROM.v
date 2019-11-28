@@ -1,4 +1,4 @@
-module InstMemory (
+module AsyncROM (
   input [9:0] addr, // solo ocuparemos los primeros 10 bits para la direccion
   input en,
   output [31:0] readData

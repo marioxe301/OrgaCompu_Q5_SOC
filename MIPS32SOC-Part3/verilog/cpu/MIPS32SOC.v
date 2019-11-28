@@ -22,8 +22,8 @@ module MIPS32SOC (
     wire [31:0] rfData2 /*verilator public*/;
     wire [31:0] imm32;
     wire [15:0] imm16;
-    wire [12:0] memAddr; // cambio a 13 bits
-    wire [3:0]memWrite; // cambio a 4 bits
+    wire [31:0] memAddr; // cambio a 13 bits
+    wire memWrite; // cambio a 1 bits
     wire memRead;
     wire [31:0] memData;
     wire [2:0] aluFunc;
@@ -126,7 +126,7 @@ module MIPS32SOC (
     );
 
     // Instruction Memory
-    InstMemory instMem (
+    AsyncROM instMem (
         .addr( phyAddrPc[11:2]), //PC[11:2]
         .en( 1'b1 ),
         .readData( inst )
@@ -137,7 +137,7 @@ module MIPS32SOC (
         .virtualAddr( aluResult ), // 32 bits
         .memWrite( memWrite),
         .memRead( memRead),
-        .physicalAddr( memAddr ), // 13 bits
+        .physicalAddr( memAddr ), // 32 bits
         .memEnable( wireMemEn ), // 3 bits
         .memBank( wireMemBank ), // 2 bits y se usa en un mux
         .invalidAddr( invalidAddr )  // 1 bit
