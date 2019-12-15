@@ -1,3 +1,0 @@
-/home/marioxe301/Documents/OrgaComp/ProyectoOrga/ProyectoSOC/OrgaCompu_Q5_SOC/build-sim/CMakeFiles/rebuild_cache.dir
-/home/marioxe301/Documents/OrgaComp/ProyectoOrga/ProyectoSOC/OrgaCompu_Q5_SOC/build-sim/CMakeFiles/Mips32SocSim.dir
-/home/marioxe301/Documents/OrgaComp/ProyectoOrga/ProyectoSOC/OrgaCompu_Q5_SOC/build-sim/CMakeFiles/edit_cache.dir
