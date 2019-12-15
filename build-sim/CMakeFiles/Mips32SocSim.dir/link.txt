@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++14  -rdynamic CMakeFiles/Mips32SocSim.dir/opt/verilator/share/verilator/include/verilated.cpp.o CMakeFiles/Mips32SocSim.dir/CmdArgs.cpp.o CMakeFiles/Mips32SocSim.dir/VGATextWindow.cpp.o CMakeFiles/Mips32SocSim.dir/Mips32SocSim.cpp.o CMakeFiles/Mips32SocSim.dir/Main.cpp.o  -o Mips32SocSim verilog-build/VMIPS32SOC__ALL.a -lSDL2 -lpthread 
